@@ -3,7 +3,7 @@ import urllib, subprocess, os, re
 from pyquery import PyQuery as pq
 
 url = 'http://www.sublimetext.com/2'
-subl_folder = '/home/mattias/subl_update/'
+subl_folder = '/opt/'
 
 def _get_latest_url():
 	dom = pq(url=url)
