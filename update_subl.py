@@ -1,41 +1,40 @@
 #!/usr/bin/python
+"""
+Copyright (c) 2013, Mattias Lundberg
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+  * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+  * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+
 import urllib, subprocess, os, re
 from pyquery import PyQuery as pq
 
 url = 'http://www.sublimetext.com/2'
-subl_folder = '/opt/'
+subl_folder = '/tmp/'
 
-def _get_latest_url():
+def _get_latest_urls():
 	dom = pq(url=url)
 	
-	return dom('#dl_linux_64 > a')[0].get('href')
-
-def _cmp_version(old, new):
-	def normalize(v):
-		return [int(x) for x in re.sub(r'(\.0+)*$','', v).split(".")]
-	return cmp(normalize(old), normalize(new))
+	return [a.get('href') for a in dom('#dl_linux_64 > a')]
 
 def main():
-	latest_url = _get_latest_url()
+	urls = _get_latest_urls()
 	
-	version = latest_url.split(' ')[2]
+	latest_url = None
+	for u in urls:
+		if '.tar.bz2' in u:
+			latest_url = u
+			break
+	assert latest_url != None, 'Did not find url'
+	
+	print 'Updating to %s' % latest_url
+	
 	filename = latest_url.split('/')[-1]
-	
-	try:
-		old_version_file = file('%slatest_version' % subl_folder, 'r')
-		old_version = old_version_file.readline().replace('\n','').replace('^M','')
-		old_version_file.close()
-	except IOError:
-		old_version = '0'
-	
-	if _cmp_version(old_version, version) >= 0:
-		print 'No updates found'
-		return
-	else:
-		print 'Updating from %s to %s' % (old_version, version)
-		old_version_file = file('%slatest_version' % subl_folder, 'w')
-		old_version_file.write(version)
-		old_version_file.close
 	
 	mysock = urllib.urlopen(latest_url)
 	rawdata = mysock.read()
@@ -43,13 +42,8 @@ def main():
 	rawfile.write(rawdata)
 	rawfile.close()
 	
-	out = subprocess.check_output(['ls', subl_folder])
-	
-	if 'Sublime Text 2' in out.split('\n'):
-		print 'Backing up old version'
-		subprocess.Popen(['mv', '%sSublime Text 2' % subl_folder, '%sSublime Text %s backup' % (subl_folder, old_version)])
-	
-	subprocess.Popen(['tar', 'xf', subl_folder + filename])
+	print 'Extracting "tar xf %s"' % (subl_folder + filename)
+	subprocess.Popen(['tar', 'xf', subl_folder + filename, '-C', subl_folder])
 	
 	print 'Done!'
 
