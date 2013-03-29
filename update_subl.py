@@ -18,7 +18,7 @@ version = '2' # Valid choices are '2', '3' and '3dev'
 arch = 32
 
 url = 'http://www.sublimetext.com/%s' % version
-subl_folder = '/tmp/'
+subl_folder = '/opt/'
 
 def _get_latest_urls():
 	dom = pq(url=url)
