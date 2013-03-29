@@ -14,13 +14,15 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 import urllib, subprocess, os, re
 from pyquery import PyQuery as pq
 
-url = 'http://www.sublimetext.com/2'
+version = '2' # Valid choices are '2', '3' and '3dev'
+arch = 32
+
+url = 'http://www.sublimetext.com/%s' % version
 subl_folder = '/tmp/'
 
 def _get_latest_urls():
 	dom = pq(url=url)
-	
-	return [a.get('href') for a in dom('#dl_linux_64 > a')]
+	return [a.get('href') for a in dom('#dl_linux_%s > a' % arch)]
 
 def main():
 	urls = _get_latest_urls()
@@ -43,7 +45,16 @@ def main():
 	rawfile.close()
 	
 	print 'Extracting "tar xf %s"' % (subl_folder + filename)
-	subprocess.Popen(['tar', 'xf', subl_folder + filename, '-C', subl_folder])
+	subprocess.Popen(['tar', 'xf', filename], cwd = subl_folder)
+	
+	syml = raw_input("Create symlink in /usr/bin for 'sublime_text' (y/[n]): ")
+	
+	if 'y' in syml:
+		print 'Creating symlink'
+		if '3' in version:
+			subprocess.Popen(['ln', '-s', '%ssublime_text_3/sublime_text' % (subl_folder)], cwd = '/usr/bin')
+		else:
+			subprocess.Popen(['ln', '-s', '%sSublime Text 2/sublime_text' % (subl_folder)], cwd = '/usr/bin')
 	
 	print 'Done!'
 
