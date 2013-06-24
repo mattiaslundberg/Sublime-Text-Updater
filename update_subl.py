@@ -25,7 +25,7 @@ def _get_latest_urls(arch, url):
 	data = sock.read().decode('utf-8') if is_py3 else sock.read()
 	return re.search("linux[ ,\w,_,-]+%s.*href\=\"(.*?\.tar\.bz2)\""  % arch, data)
 
-def main(arch, version, subl_folder):
+def main(arch, version, subl_folder, syml):
 	url = 'http://www.sublimetext.com/%s' % version
 	download = _get_latest_urls(arch, url).group(1)
 	
@@ -35,7 +35,7 @@ def main(arch, version, subl_folder):
 	
 	filename = download.split('/')[-1]
 	
-	sock = urllib.urlopen(download)
+	sock = urllib.urlopen(download.replace(' ', '%20'))
 	data = sock.read()
 	rawfile = open(subl_folder + filename, 'wb')
 	rawfile.write(data)
@@ -44,9 +44,7 @@ def main(arch, version, subl_folder):
 	print( 'Extracting "tar xf %s"' % (subl_folder + filename) )
 	subprocess.Popen(['tar', 'xf', filename], cwd = subl_folder)
 	
-	syml = input("Create symlink in /usr/bin for 'sublime_text' (y/[n]): ")
-	
-	if 'y' in syml:
+	if syml:
 		print( 'Creating symlink' )
 		if '3' in version:
 			subprocess.Popen(['ln', '-s', '%ssublime_text_3/sublime_text' % (subl_folder)], cwd = '/usr/bin')
@@ -57,11 +55,14 @@ def main(arch, version, subl_folder):
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Update the Sublime Text editor.')
-	parser.add_argument('-a', '--architecture', dest='arch', default='32', help='Architecture (32/64).')
-	parser.add_argument('-v', '--version', dest='version', default='2', help='Version to download (2/2dev/3/3dev).')
-	parser.add_argument('-f', '--folder', dest='subl_folder', default='/opt/', help='Location for installation of Sublime Text (/opt/).')
+	parser.add_argument('-a', '--architecture', dest='arch', default='32', help='Architecture ([32]/64).')
+	parser.add_argument('-v', '--version', dest='version', default='2', help='Version to download ([2]/2dev/3/3dev).')
+	parser.add_argument('-f', '--folder', dest='subl_folder', default='/opt/', help='Location for installation of Sublime Text [/opt/].')
+	parser.add_argument('-s', '--symlink', dest='syml', default=False, action='store_true', help='Enable creation of symlink in /usr/bin for \'sublime_text\'.')
+	
 	args = parser.parse_args()
 	assert args.version in ['2', '2dev', '3', '3dev'], 'Unknown version'
 	assert args.arch in ['32', '64'], 'Unknown version'
+	assert re.match('^\/.*\/$', args.subl_folder), 'Make sure to use absolute path ending with /'
 	
-	main(args.arch, args.version, args.subl_folder)
+	main(args.arch, args.version, args.subl_folder, args.syml)
