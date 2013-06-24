@@ -12,7 +12,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 """
 
 import urllib, subprocess, os, re
-from pyquery import PyQuery as pq
 
 version = '2' # Valid choices are '2', '3' and '3dev'
 arch = 32
@@ -21,42 +20,37 @@ url = 'http://www.sublimetext.com/%s' % version
 subl_folder = '/opt/'
 
 def _get_latest_urls():
-	dom = pq(url=url)
-	return [a.get('href') for a in dom('#dl_linux_%s > a' % arch)]
+	sock = urllib.urlopen(url)
+	return re.search("linux[ ,\w,_,-]+%s.*href\=\"(.*?\.tar\.bz2)\""  % arch, sock.read())
 
 def main():
-	urls = _get_latest_urls()
+	url = _get_latest_urls().group(1)
 	
-	latest_url = None
-	for u in urls:
-		if '.tar.bz2' in u:
-			latest_url = u
-			break
-	assert latest_url != None, 'Did not find url'
+	assert url != None, 'Download URL not found!'
 	
-	print 'Updating to %s' % latest_url
+	print( 'Updating to %s' % url )
 	
 	filename = latest_url.split('/')[-1]
 	
-	mysock = urllib.urlopen(latest_url)
-	rawdata = mysock.read()
+	sock = urllib.urlopen(url)
+	data = sock.read()
 	rawfile = file(subl_folder + filename, 'wb')
-	rawfile.write(rawdata)
+	rawfile.write(data)
 	rawfile.close()
 	
-	print 'Extracting "tar xf %s"' % (subl_folder + filename)
+	print( 'Extracting "tar xf %s"' % (subl_folder + filename) )
 	subprocess.Popen(['tar', 'xf', filename], cwd = subl_folder)
 	
 	syml = raw_input("Create symlink in /usr/bin for 'sublime_text' (y/[n]): ")
 	
 	if 'y' in syml:
-		print 'Creating symlink'
+		print( 'Creating symlink' )
 		if '3' in version:
 			subprocess.Popen(['ln', '-s', '%ssublime_text_3/sublime_text' % (subl_folder)], cwd = '/usr/bin')
 		else:
 			subprocess.Popen(['ln', '-s', '%sSublime Text 2/sublime_text' % (subl_folder)], cwd = '/usr/bin')
 	
-	print 'Done!'
+	print( 'Done installing Sublime Text' )
 
 if __name__ == '__main__':
 	main()
