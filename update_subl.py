@@ -56,13 +56,13 @@ def main(arch, version, subl_folder, syml):
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Update the Sublime Text editor.')
 	parser.add_argument('-a', '--architecture', dest='arch', default='32', help='Architecture ([32]/64).')
-	parser.add_argument('-v', '--version', dest='version', default='2', help='Version to download ([2]/2dev/3/3dev).')
+	parser.add_argument('-v', '--version', dest='version', default='2', help='Version to download ([2]/3/3dev).')
 	parser.add_argument('-f', '--folder', dest='subl_folder', default='/opt/', help='Location for installation of Sublime Text [/opt/].')
 	parser.add_argument('-s', '--symlink', dest='syml', default=False, action='store_true', help='Enable creation of symlink in /usr/bin for \'sublime_text\'.')
 	
 	args = parser.parse_args()
-	assert args.version in ['2', '2dev', '3', '3dev'], 'Unknown version'
-	assert args.arch in ['32', '64'], 'Unknown version'
+	assert args.version in ['2', '3', '3dev'], 'Unknown version use 2, 3 or 3dev'
+	assert args.arch in ['32', '64'], 'Unknown architecture use 32 or 64'
 	assert re.match('^\/.*\/$', args.subl_folder), 'Make sure to use absolute path ending with /'
 	
 	main(args.arch, args.version, args.subl_folder, args.syml)
