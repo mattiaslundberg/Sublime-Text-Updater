@@ -44,6 +44,9 @@ def main(arch, version, subl_folder, syml):
 	print( 'Extracting "tar xf %s"' % (subl_folder + filename) )
 	subprocess.Popen(['tar', 'xf', filename], cwd = subl_folder)
 	
+	print( 'Deleting downloaded file %s' % (subl_folder + filename) )
+	subprocess.Popen(['rm', filename], cwd = subl_folder)
+	
 	if syml:
 		print( 'Creating symlink' )
 		if '3' in version:
