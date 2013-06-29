@@ -28,8 +28,19 @@ def _get_latest_urls(arch, url):
 def main(arch, version, subl_folder, syml):
 	url = 'http://www.sublimetext.com/%s' % version
 	download = _get_latest_urls(arch, url).group(1)
+	install_folder = 'sublime_text_3' if '3' in version else 'Sublime Text 2'
 	
 	assert download != None, 'Download URL not found!'
+	
+	# Only update to newer version (not supported for Sublime Text 2)
+	if os.path.isdir('%s%s/' % (subl_folder, install_folder)) and '3' in version:
+		try:
+			installed = ''.join(subprocess.Popen(['./sublime_text', '--version'], stdout=subprocess.PIPE, cwd = '%s%s/' % (subl_folder, install_folder)).stdout.read().split(' ')[-1].split())
+			if int(installed) >= int(re.search("build\_(\d{4})\_", download).group(1)):
+				print( 'Newer version already installed, aborting.' )
+				return
+		except:
+			pass
 	
 	print( 'Updating to %s' % download )
 	
@@ -49,10 +60,7 @@ def main(arch, version, subl_folder, syml):
 	
 	if syml:
 		print( 'Creating symlink' )
-		if '3' in version:
-			subprocess.Popen(['ln', '-s', '%ssublime_text_3/sublime_text' % (subl_folder)], cwd = '/usr/bin')
-		else:
-			subprocess.Popen(['ln', '-s', '%sSublime Text 2/sublime_text' % (subl_folder)], cwd = '/usr/bin')
+		subprocess.Popen(['ln', '-s', '%s%s/sublime_text' % (subl_folder, install_folder)], cwd = '/usr/bin')
 	
 	print( 'Done installing Sublime Text' )
 
